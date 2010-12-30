@@ -1,0 +1,166 @@
+<?PHP
+// lane66.com - pagebuilder
+include_once('l66_functions.php');
+$x = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
+
+?>
+<iframe src="http://lane66.com/plugintop2-news.php" width="100%" height="30" scrolling="no">Your system does not support Iframes so you can not see the latest news</iframe>
+<hr>
+<div style="padding-left:10px;background-color:lightgreen">
+<h2>lane66.com's pagebuilder</h2>
+This is where your shops are built !<br>
+With the tools below you can create one or more pages in your blog that shows off your affiliate products ! Either :<br>
+<br>1. build a page around a keyword (e.g. "Shoes" to build a shoe-store), 
+<br>2. select and combine certain merchants or datafeeds to show in your affiliate page
+<br>3. show all your products in the shop and let customers select and find products with the search-options
+</div>
+<hr>
+<?
+// set vars and read the db
+global $wpdb;
+$table_name = $wpdb->prefix ."lane66_feeds";
+$nums = $wpdb->get_var("SELECT COUNT(*) FROM $table_name"); // find total number of products
+$view = $wpdb->get_results("SELECT DISTINCT feedname,network FROM $table_name "); // select distinct feeds
+$nums = (int)$nums;
+if ($nums < 10) {exit ("<a href='http://portaljumper.com' target='_blank'><img src='".$x."pics/fm.jpg' width='64' height='64' title='Made possible in part by team feed-monster from http://portaljumper.com'></a><font color='red'><h3>Oh No ! You have less than 10 products in your 'warehouse'. Not enough to build a page right now !</h3>
+You should try to add more datafeeds to your warehouse first.<br>Why not try uploading your own CSV Datafeed, or maybe use one of the automated datafeed loaders!<br>
+Once you have more products in your warehouse, come back here and build some cool sales-pages and shops !</font>");}
+echo "<img src='".$x."pics/fm.jpg' width='16' height='16' title='Made possible in part by team feed-monster from http://portaljumper.com'><b> Congrats ! You currently have ".$nums." products in your warehouse</b>. More than enough to build a shop !";
+
+
+// check is form was filled out // create a page if form is done
+if (isset($_POST['select1'])) 
+		{
+		if (empty($_POST['incfeed']))
+		{echo "<hr><font color='red'><b>you did not select any products to be included in your shop</b></font>";}
+		else
+		{
+		if (empty($_POST['shoptitle']))	{$_POST['shoptitle'] = "lane66.com shops";}	
+		echo "<h2>CHECK IT OUT ! A new page named <font color='blue'>".$_POST['shoptitle']."</font> was created ! </h2>";
+		$key = $_POST['shopkeyw'];
+		if (empty($key)) {$key='notset';}
+		echo "<b>The keyword (if any) for this shop is </b><font color='red'><b>".$key."</b></font><br>";
+		echo "<b>The feeds included are : </b><br>";
+		foreach ($_POST['incfeed'] as $feeds) 
+			{
+			echo "<font color='red'><b>$feeds</b></font><br>";
+			$thefeeds.=$feeds.",";
+			}
+
+		$thefeeds = str_replace(" ","+",$thefeeds);
+	
+		$content = "[l66 key=".$key." feeds=".$thefeeds." product=".$_POST['product']." order=".$_POST['order']." layout=".$_POST['layout']."]";
+		
+		// Create post object
+			$my_post = array(
+			'post_type' => 'page',
+			'post_title' => $_POST['shoptitle'],
+			'post_content' => $content,
+			'comment_status' => $_POST['comment'],
+			'post_status' => 'publish',
+			'post_author' => 1,  );
+		// Insert the post into the database
+			$pageID = wp_insert_post( $my_post );
+			echo "<br><b>Note that the actual URl to your new page depends on your permalink settings.</b><br>Your new page can be found here : ";
+$permalink = get_permalink( $pageID ); echo "<a href='$permalink' target='_BLANK'>$permalink</a>";
+		}
+		}
+echo "<hr>" ;
+
+
+?>
+<div style="background-color:lightgreen;width:100%;height:250px">
+<div style="float:left;background-color:lightgreen;width:50%;height:250px">
+	<form action="admin.php?page=l66_pagebuilder" method="post"> 
+	Your new shop acts as a PAGE in wordpress.<br>
+	Please provide a title for your new shop -><br> 
+	<input type="text" name="shoptitle" /><hr>
+	If you want your shop to only show certain items<br>
+	provide a keyword here, otherwise leave blank -><br>
+	<input type="text" name="shopkeyw" /><hr>
+	Would you like to enable comments on your shop ?<br>
+	<input type="radio" name="comment" value="open"> yes 
+	<input type="radio" name="comment" value="closed" checked> No<hr>
+	How many products would you like in your shop ?<br>
+	<input type="radio" name="product" value="4"> 4 
+	<input type="radio" name="product" value="10" checked> 10
+	<input type="radio" name="product" value="20"
+	<?PHP if (get_option('l66_mode') == "freebie") {?>
+	onClick="this.checked=false; alert('Sorry, this option is not available in the free version. Please consider upgrading to PREMIUM membership. You can do so on the bottom of this screen.')"
+	<?PHP ;} ?>
+	> 20 
+	<input type="radio" name="product" value="100"
+	<?PHP if (get_option('l66_mode') == "freebie") {?>
+	onClick="this.checked=false; alert('Sorry, this option is not available in the free version. Please consider upgrading to PREMIUM membership. You can do so on the bottom of this screen.')"
+	<?PHP ;} ?>
+	> 100
+	<input type="radio" name="product" value="999999" 
+	<?PHP if (get_option('l66_mode') == "freebie") {?>
+	onClick="this.checked=false; alert('Sorry, this option is not available in the free version. Please consider upgrading to PREMIUM membership. You can do so on the bottom of this screen.')"
+	<?PHP ;} ?>
+	> all of them **
+	<hr><br>
+</div>
+<div style="float:left;background-color:lightgreen;height:50px">
+Show your products in which order ?<br>
+	<input type="radio" name="order" value="ltoh" checked> low to high price
+	<input type="radio" name="order" value="htol"> high to low price 
+	<input type="radio" name="order" value="alpha"> A - Z
+	<input type="radio" name="order" value="alpha2"> Z - A
+	<hr>
+<div>
+	Now tell us which feeds you want to include in your shop -><br /> 
+</div>
+<div style="height:180px;overflow:scroll">
+<?PHP
+foreach ($view as $row) 
+		{
+	echo "<input type='checkbox' name='incfeed[]' value='".$row->feedname."' />".$row->feedname." (".$row->network.")<br>" ;
+		}
+?>
+	<br>
+</div>
+
+</div>
+
+</div>
+
+<div style="clear:both;background-color:#CEF6CE">
+
+<?PHP
+// go fetch available layouts and return as form function
+$bl = get_bloginfo('wpurl');
+$lay = "http://lane66.com/l66/layout.php?iam=".$bl."&view=1";
+$ch = curl_init();
+curl_setopt($ch,CURLOPT_URL,$lay);
+curl_setopt($ch,CURLOPT_FRESH_CONNECT,TRUE);
+curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,5);
+if(curl_exec($ch) === false) {echo "<br><font color='red'>Curl error !<br>This needs to be fixed first before you can proceed !</font> " . curl_error($ch);}
+$layouts = curl_exec($ch);
+curl_close($ch);
+echo $layouts;
+// example <div style="float:left;width:250px;padding:10px"><center><img alt="l66 layout" src="http://lane66.com/l66/layoutpics/layout1.jpg" width="210" height="140"><br><b>Default</b> 300x200 pixels<br>The default layout with a catchy title bar, a thumbnail left, description right, and the currency + price in a pale yellow bottom bar.<br><input type="radio" name="layout" value="1" checked></div>
+
+?>
+
+<INPUT TYPE=hidden NAME="select1" VALUE="1">
+	<input type="submit" value="Build a shop-page with these settings"/><br>
+
+
+
+</div>
+<br>
+
+
+
+
+
+	
+
+
+
+
+<div style="clear:both"></div>
+<?PHP include ('l66_footer.php'); ?>	
+
